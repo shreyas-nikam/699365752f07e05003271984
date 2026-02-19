@@ -14,6 +14,7 @@ import os
 plt.switch_backend('Agg')
 np.random.seed(42)
 
+
 def setup_stock_scoring_environment(n_stocks=500, n_months=60, test_size=0.2, random_state=42):
     """
     Simulates factor-based stock data and trains an XGBoost regressor as a black-box stock scoring model.
@@ -66,11 +67,13 @@ def setup_stock_scoring_environment(n_stocks=500, n_months=60, test_size=0.2, ra
     )
     model.fit(X_train, y_train)
 
-    print(f"Model trained on {len(X_train)} samples with {len(feature_cols)} features.")
+    print(
+        f"Model trained on {len(X_train)} samples with {len(feature_cols)} features.")
     print(f"Test R-squared: {model.score(X_test, y_test):.4f}")
     print("-------------------------------------------\n")
 
     return model, X_train, y_train, X_test, y_test, feature_cols, factors_df
+
 
 def explain_stock_lime(model, X_data, idx_in_X_data, lime_explainer, feature_names, n_features=8, stock_name="Stock", output_dir="explanation_outputs", save_plot=True):
     """
@@ -114,33 +117,40 @@ def explain_stock_lime(model, X_data, idx_in_X_data, lime_explainer, feature_nam
             'direction': 'POSITIVE' if weight > 0 else 'NEGATIVE',
             'abs_weight': abs(weight)
         })
-    contrib_df = pd.DataFrame(contributions).sort_values(by='abs_weight', ascending=False)
+    contrib_df = pd.DataFrame(contributions).sort_values(
+        by='abs_weight', ascending=False)
 
-    print(f"\nLIME EXPLANATION for {stock_name} (Index in X_data: {idx_in_X_data})")
-    print(f"Predicted Return: {prediction:+.4f} ({prediction*100:+.2f}%/month)")
+    print(
+        f"\nLIME EXPLANATION for {stock_name} (Index in X_data: {idx_in_X_data})")
+    print(
+        f"Predicted Return: {prediction:+.4f} ({prediction*100:+.2f}%/month)")
 
-    recommendation = "OVERWEIGHT" if prediction > 0.005 else ("UNDERWEIGHT" if prediction < -0.005 else "NEUTRAL")
+    recommendation = "OVERWEIGHT" if prediction > 0.005 else (
+        "UNDERWEIGHT" if prediction < -0.005 else "NEUTRAL")
     print(f"Model Recommendation: {recommendation}")
     print("=" * 60)
 
     print(f"{'Feature Rule':<35s} {'Weight':>8s} {'Bar'}")
     print("-" * 60)
     for _, row in contrib_df.iterrows():
-        bar_len = int(abs(row['lime_weight']) * 200) # Adjusted scaling
+        bar_len = int(abs(row['lime_weight']) * 200)  # Adjusted scaling
         bar_char = '+' if row['lime_weight'] > 0 else '-'
-        bar = bar_char * min(bar_len, 30) # Cap bar length to avoid excessively long bars
+        # Cap bar length to avoid excessively long bars
+        bar = bar_char * min(bar_len, 30)
         print(f" {row['feature_rule']:<35s} {row['lime_weight']:>+8.4f} {bar}")
 
     if save_plot:
         fig = explanation.as_pyplot_figure()
         fig.set_size_inches(10, 6)
-        fig.suptitle(f"LIME Explanation for {stock_name} (Predicted Return: {prediction*100:+.2f}%)", y=1.02)
+        fig.suptitle(
+            f"LIME Explanation for {stock_name} (Predicted Return: {prediction*100:+.2f}%)", y=1.02)
         plt.tight_layout()
         filename = f'lime_explanation_{stock_name.lower().replace(" ", "_").replace("(", "").replace(")", "").replace(".", "")}.png'
         plt.savefig(os.path.join(output_dir, filename), dpi=150)
         plt.close(fig)
 
     return explanation, contrib_df, prediction
+
 
 def generate_investment_rationale(explanation_as_list, prediction, stock_name='Stock'):
     """
@@ -156,7 +166,8 @@ def generate_investment_rationale(explanation_as_list, prediction, stock_name='S
     """
     print(f"\n--- INVESTMENT RATIONALE for {stock_name} ---")
 
-    rec = "OVERWEIGHT" if prediction > 0.005 else ("UNDERWEIGHT" if prediction < -0.005 else "NEUTRAL")
+    rec = "OVERWEIGHT" if prediction > 0.005 else (
+        "UNDERWEIGHT" if prediction < -0.005 else "NEUTRAL")
     print(f"Model Recommendation: {rec}")
     print(f"Expected Alpha: {prediction*100:+.2f}%/month")
     print("=" * 55)
@@ -175,7 +186,8 @@ def generate_investment_rationale(explanation_as_list, prediction, stock_name='S
     positives = []
     negatives = []
 
-    for feat_rule, weight in explanation_as_list[:6]: # Consider top 6 features for narrative
+    # Consider top 6 features for narrative
+    for feat_rule, weight in explanation_as_list[:6]:
         feat_name = None
         for key in language_map:
             if key in feat_rule:
@@ -186,20 +198,30 @@ def generate_investment_rationale(explanation_as_list, prediction, stock_name='S
             concept, detail = language_map[feat_name]
             # Refine concept based on rule for better narrative
             if 'pe_ratio_z' in feat_rule:
-                if weight > 0 and '<=' in feat_rule: concept = 'attractive ' + concept
-                elif weight < 0 and '>=' in feat_rule: concept = 'expensive ' + concept
+                if weight > 0 and '<=' in feat_rule:
+                    concept = 'attractive ' + concept
+                elif weight < 0 and '>=' in feat_rule:
+                    concept = 'expensive ' + concept
             elif 'earnings_growth' in feat_rule:
-                if weight > 0 and '>=' in feat_rule: concept = 'strong ' + concept
-                elif weight < 0 and '<=' in feat_rule: concept = 'weak ' + concept
+                if weight > 0 and '>=' in feat_rule:
+                    concept = 'strong ' + concept
+                elif weight < 0 and '<=' in feat_rule:
+                    concept = 'weak ' + concept
             elif 'momentum_12m' in feat_rule:
-                if weight > 0 and '>=' in feat_rule: concept = 'strong ' + concept
-                elif weight < 0 and '<=' in feat_rule: concept = 'weak ' + concept
+                if weight > 0 and '>=' in feat_rule:
+                    concept = 'strong ' + concept
+                elif weight < 0 and '<=' in feat_rule:
+                    concept = 'weak ' + concept
             elif 'analyst_sentiment' in feat_rule:
-                if weight > 0 and '>=' in feat_rule: concept = 'positive ' + concept
-                elif weight < 0 and '<=' in feat_rule: concept = 'negative ' + concept
+                if weight > 0 and '>=' in feat_rule:
+                    concept = 'positive ' + concept
+                elif weight < 0 and '<=' in feat_rule:
+                    concept = 'negative ' + concept
             elif 'volatility_60d' in feat_rule:
-                if weight < 0 and '>=' in feat_rule: concept = 'elevated ' + concept
-                elif weight > 0 and '<=' in feat_rule: concept = 'low ' + concept
+                if weight < 0 and '>=' in feat_rule:
+                    concept = 'elevated ' + concept
+                elif weight > 0 and '<=' in feat_rule:
+                    concept = 'low ' + concept
 
             if weight > 0:
                 positives.append(f"{concept} ({detail})")
@@ -225,12 +247,15 @@ def generate_investment_rationale(explanation_as_list, prediction, stock_name='S
         summary += "on a combination of factors."
 
     if negatives:
-        if positives: summary += f" The main risk is {negatives[0]}."
-        else: summary += f" The primary negative factor is {negatives[0]}."
+        if positives:
+            summary += f" The main risk is {negatives[0]}."
+        else:
+            summary += f" The primary negative factor is {negatives[0]}."
 
     print(summary)
     print("-------------------------------------------\n")
     return summary
+
 
 def test_lime_stability(model, X_data, idx_in_X_data, lime_explainer, feature_names, n_runs=10, output_dir="explanation_outputs", save_plot=True):
     """
@@ -247,12 +272,17 @@ def test_lime_stability(model, X_data, idx_in_X_data, lime_explainer, feature_na
         save_plot (bool): Whether to save the stability box plot.
 
     Returns:
-        pd.DataFrame: A DataFrame showing stability metrics (mean, std, cv, frequency) for each feature.
+        tuple: (stab_df, plot_df_filtered) 
+            - stab_df: A DataFrame showing stability metrics (mean, std, cv, frequency) for each feature.
+            - plot_df_filtered: A DataFrame with all weight values for top features (for plotting), or empty DataFrame.
     """
+    plot_df_filtered = pd.DataFrame()  # Initialize to empty DataFrame
+
     if save_plot:
         os.makedirs(output_dir, exist_ok=True)
 
-    print(f"\n--- LIME EXPLANATION STABILITY ANALYSIS (Stock Index: {idx_in_X_data}, {n_runs} runs) ---")
+    print(
+        f"\n--- LIME EXPLANATION STABILITY ANALYSIS (Stock Index: {idx_in_X_data}, {n_runs} runs) ---")
 
     instance = X_data.iloc[idx_in_X_data].values
     all_explanations_weights = []
@@ -273,12 +303,14 @@ def test_lime_stability(model, X_data, idx_in_X_data, lime_explainer, feature_na
 
     stability_data = {}
     for feat_rule in all_features:
-        values = [exp_weights.get(feat_rule, 0) for exp_weights in all_explanations_weights]
+        values = [exp_weights.get(feat_rule, 0)
+                  for exp_weights in all_explanations_weights]
 
         mean_val = np.mean(values)
         std_val = np.std(values)
 
-        cv_val = std_val / (abs(mean_val) + 1e-6) # Add small epsilon to avoid division by zero
+        # Add small epsilon to avoid division by zero
+        cv_val = std_val / (abs(mean_val) + 1e-6)
 
         appeared_in = sum(1 for v in values if v != 0)
 
@@ -289,15 +321,18 @@ def test_lime_stability(model, X_data, idx_in_X_data, lime_explainer, feature_na
             'appeared_in_runs': appeared_in
         }
 
-    stab_df = pd.DataFrame(stability_data).T.sort_values(by='mean_weight', key=abs, ascending=False)
-    stab_df['rank'] = stab_df['mean_weight'].abs().rank(ascending=False, method='min').astype(int)
+    stab_df = pd.DataFrame(stability_data).T.sort_values(
+        by='mean_weight', key=abs, ascending=False)
+    stab_df['rank'] = stab_df['mean_weight'].abs().rank(
+        ascending=False, method='min').astype(int)
     stab_df = stab_df.round(4)
 
     print("\nFeature Explanation Stability Table:")
     print(f"{'Rank':<5s} {'Feature Rule':<35s} {'Mean':>8s} {'Std':>8s} {'CV':>8s} {'Freq':>6s} {'Status':<10s}")
     print("=" * 90)
     for _, row in stab_df.iterrows():
-        status = 'STABLE' if row['cv'] < 0.3 else ('MODERATE' if row['cv'] < 0.6 else 'UNSTABLE')
+        status = 'STABLE' if row['cv'] < 0.3 else (
+            'MODERATE' if row['cv'] < 0.6 else 'UNSTABLE')
         print(f"{int(row['rank']):<5d} {row.name[:35]:<35s} {row['mean_weight']:>+8.4f} {row['std_weight']:>8.4f} {row['cv']:>8.2f} {int(row['appeared_in_runs']):>6d} {status:<10s}")
 
     avg_cv_overall = stab_df['cv'].mean()
@@ -307,29 +342,38 @@ def test_lime_stability(model, X_data, idx_in_X_data, lime_explainer, feature_na
     elif avg_cv_overall > 0.3:
         print("Note: LIME explanations show moderate instability. Review critical features carefully.")
     else:
-        print("PASS: LIME explanations appear reasonably stable on average for this instance.")
+        print(
+            "PASS: LIME explanations appear reasonably stable on average for this instance.")
 
     if save_plot:
         plot_data = []
-        features_to_plot = stab_df[stab_df['appeared_in_runs'] > 0].index.tolist()
+        features_to_plot = stab_df[stab_df['appeared_in_runs']
+                                   > 0].index.tolist()
         if not features_to_plot:
             print("No features with non-zero weights found for plotting stability.")
         else:
             for feat_rule in features_to_plot:
-                values = [exp_weights.get(feat_rule, 0) for exp_weights in all_explanations_weights]
-                plot_data.extend([{'feature_rule': feat_rule, 'weight': w} for w in values])
+                values = [exp_weights.get(feat_rule, 0)
+                          for exp_weights in all_explanations_weights]
+                plot_data.extend(
+                    [{'feature_rule': feat_rule, 'weight': w} for w in values])
 
             plot_df = pd.DataFrame(plot_data)
 
             # Plot top features by absolute mean weight for clarity
-            top_features_for_plot = stab_df.head(min(10, len(stab_df))).index.tolist()
-            plot_df_filtered = plot_df[plot_df['feature_rule'].isin(top_features_for_plot)]
+            top_features_for_plot = stab_df.head(
+                min(10, len(stab_df))).index.tolist()
+            plot_df_filtered = plot_df[plot_df['feature_rule'].isin(
+                top_features_for_plot)]
 
             if not plot_df_filtered.empty:
                 plt.figure(figsize=(12, 7))
-                ordered_features = stab_df.loc[top_features_for_plot, 'mean_weight'].abs().sort_values(ascending=False).index
-                sns.boxplot(x='weight', y='feature_rule', data=plot_df_filtered, orient='h', order=ordered_features)
-                plt.title(f'LIME Feature Weight Stability (Box Plot across {n_runs} Runs) for Stock Index {idx_in_X_data}')
+                ordered_features = stab_df.loc[top_features_for_plot, 'mean_weight'].abs(
+                ).sort_values(ascending=False).index
+                sns.boxplot(x='weight', y='feature_rule',
+                            data=plot_df_filtered, orient='h', order=ordered_features)
+                plt.title(
+                    f'LIME Feature Weight Stability (Box Plot across {n_runs} Runs) for Stock Index {idx_in_X_data}')
                 plt.xlabel('LIME Weight')
                 plt.ylabel('Feature Rule')
                 plt.grid(axis='x', linestyle='--', alpha=0.7)
@@ -340,7 +384,8 @@ def test_lime_stability(model, X_data, idx_in_X_data, lime_explainer, feature_na
             else:
                 print("No data to plot for LIME stability after filtering.")
 
-    return stab_df
+    return stab_df, plot_df_filtered
+
 
 def compare_shap_lime(model, X_data, idx_in_X_data, lime_explainer, feature_names, stock_name="Stock", output_dir="explanation_outputs", save_plot=True):
     """
@@ -358,15 +403,17 @@ def compare_shap_lime(model, X_data, idx_in_X_data, lime_explainer, feature_name
         save_plot (bool): Whether to save the SHAP vs LIME rank comparison plot.
 
     Returns:
-        tuple: (shap_contrib_df, lime_contrib_df, rank_corr_coeff)
+        tuple: (shap_contrib_df, lime_contrib_df, rank_corr_coeff, comparison_df)
             shap_contrib_df (pd.DataFrame): SHAP values for each feature.
             lime_contrib_df (pd.DataFrame): LIME weights mapped to feature names.
             rank_corr_coeff (float): Spearman rank correlation coefficient.
+            comparison_df (pd.DataFrame): Merged comparison of SHAP and LIME rankings.
     """
     if save_plot:
         os.makedirs(output_dir, exist_ok=True)
 
-    print(f"\n--- SHAP vs. LIME HEAD-TO-HEAD COMPARISON for {stock_name} (Index: {idx_in_X_data}) ---")
+    print(
+        f"\n--- SHAP vs. LIME HEAD-TO-HEAD COMPARISON for {stock_name} (Index: {idx_in_X_data}) ---")
 
     instance = X_data.iloc[idx_in_X_data:idx_in_X_data+1]
 
@@ -401,18 +448,21 @@ def compare_shap_lime(model, X_data, idx_in_X_data, lime_explainer, feature_name
                 best_match_feat = feat
 
         if best_match_feat:
-            lime_weights_mapped[best_match_feat] = lime_weights_mapped.get(best_match_feat, 0) + weight
+            lime_weights_mapped[best_match_feat] = lime_weights_mapped.get(
+                best_match_feat, 0) + weight
 
     lime_contrib_df = pd.DataFrame({
         'feature': list(lime_weights_mapped.keys()),
         'lime_weight': list(lime_weights_mapped.values())
     })
     lime_contrib_df['abs_lime_weight'] = np.abs(lime_contrib_df['lime_weight'])
-    lime_contrib_df = lime_contrib_df.sort_values(by='abs_lime_weight', ascending=False).reset_index(drop=True)
+    lime_contrib_df = lime_contrib_df.sort_values(
+        by='abs_lime_weight', ascending=False).reset_index(drop=True)
     lime_contrib_df['lime_rank'] = lime_contrib_df.index + 1
 
     comparison_df = pd.merge(shap_contrib_df[['feature', 'shap_value', 'shap_rank']],
-                             lime_contrib_df[['feature', 'lime_weight', 'lime_rank']],
+                             lime_contrib_df[['feature',
+                                              'lime_weight', 'lime_rank']],
                              on='feature', how='outer')
     comparison_df = comparison_df.fillna({
         'shap_value': 0,
@@ -423,7 +473,8 @@ def compare_shap_lime(model, X_data, idx_in_X_data, lime_explainer, feature_name
     comparison_df['shap_rank'] = comparison_df['shap_rank'].astype(int)
     comparison_df['lime_rank'] = comparison_df['lime_rank'].astype(int)
 
-    comparison_df = comparison_df.sort_values(by='shap_rank').reset_index(drop=True)
+    comparison_df = comparison_df.sort_values(
+        by='shap_rank').reset_index(drop=True)
 
     print("\n--- Feature Contribution & Rank Comparison ---")
     print(f"{'Feature':<22s} {'SHAP Value':>10s} {'SHAP Rank':>10s} {'LIME Weight':>12s} {'LIME Rank':>10s}")
@@ -435,9 +486,11 @@ def compare_shap_lime(model, X_data, idx_in_X_data, lime_explainer, feature_name
     shap_ranks_aligned = comparison_df['shap_rank'].tolist()
     lime_ranks_aligned = comparison_df['lime_rank'].tolist()
 
-    rank_corr_coeff, p_value = spearmanr(shap_ranks_aligned, lime_ranks_aligned)
+    rank_corr_coeff, p_value = spearmanr(
+        shap_ranks_aligned, lime_ranks_aligned)
 
-    print(f"\nSpearman Rank Correlation (SHAP vs. LIME features): {rank_corr_coeff:.3f}")
+    print(
+        f"\nSpearman Rank Correlation (SHAP vs. LIME features): {rank_corr_coeff:.3f}")
 
     if rank_corr_coeff > 0.7:
         print("Conclusion: GOOD. SHAP and LIME largely agree on feature ranking. This increases confidence in the explanation.")
@@ -448,12 +501,16 @@ def compare_shap_lime(model, X_data, idx_in_X_data, lime_explainer, feature_name
 
     if save_plot:
         plt.figure(figsize=(8, 8))
-        sns.scatterplot(x='shap_rank', y='lime_rank', data=comparison_df, hue='feature', s=100)
+        sns.scatterplot(x='shap_rank', y='lime_rank',
+                        data=comparison_df, hue='feature', s=100)
 
-        max_rank = max(comparison_df['shap_rank'].max(), comparison_df['lime_rank'].max())
-        plt.plot([0, max_rank + 1], [0, max_rank + 1], 'k--', alpha=0.6, label='Perfect Agreement')
+        max_rank = max(comparison_df['shap_rank'].max(),
+                       comparison_df['lime_rank'].max())
+        plt.plot([0, max_rank + 1], [0, max_rank + 1],
+                 'k--', alpha=0.6, label='Perfect Agreement')
 
-        plt.title(f'SHAP Rank vs. LIME Rank for {stock_name} (Spearman: {rank_corr_coeff:.2f})')
+        plt.title(
+            f'SHAP Rank vs. LIME Rank for {stock_name} (Spearman: {rank_corr_coeff:.2f})')
         plt.xlabel('SHAP Feature Rank (1 = most important)')
         plt.ylabel('LIME Feature Rank (1 = most important)')
         plt.xticks(range(1, max_rank + 2))
@@ -465,7 +522,8 @@ def compare_shap_lime(model, X_data, idx_in_X_data, lime_explainer, feature_name
         plt.savefig(os.path.join(output_dir, filename), dpi=150)
         plt.close()
 
-    return shap_contrib_df, lime_contrib_df, rank_corr_coeff
+    return shap_contrib_df, lime_contrib_df, rank_corr_coeff, comparison_df
+
 
 def run_explanation_workflow(
     n_stocks=500, n_months=60, test_size=0.2, random_state=42, output_dir="explanation_outputs"
@@ -484,19 +542,23 @@ def run_explanation_workflow(
         dict: A dictionary containing key results and explanation data.
     """
     os.makedirs(output_dir, exist_ok=True)
-    print(f"Explanation outputs will be saved to: {os.path.abspath(output_dir)}")
+    print(
+        f"Explanation outputs will be saved to: {os.path.abspath(output_dir)}")
 
     # 1. Setup the environment and train the model
     model, X_train, y_train, X_test, y_test, feature_cols, factors_df = \
-        setup_stock_scoring_environment(n_stocks, n_months, test_size, random_state)
+        setup_stock_scoring_environment(
+            n_stocks, n_months, test_size, random_state)
 
     # 2. Identify top and bottom scoring stocks in the test set
     predictions = model.predict(X_test)
     top_stock_idx_in_test = np.argmax(predictions)
     bottom_stock_idx_in_test = np.argmin(predictions)
 
-    print(f"Top scoring stock in test set (index in X_test): {top_stock_idx_in_test}")
-    print(f"Bottom scoring stock in test set (index in X_test): {bottom_stock_idx_in_test}")
+    print(
+        f"Top scoring stock in test set (index in X_test): {top_stock_idx_in_test}")
+    print(
+        f"Bottom scoring stock in test set (index in X_test): {bottom_stock_idx_in_test}")
 
     # 3. Initialize LIME Explainer
     lime_explainer = lime.lime_tabular.LimeTabularExplainer(
@@ -527,7 +589,8 @@ def run_explanation_workflow(
         output_dir=output_dir
     )
     rationale_top_stock = generate_investment_rationale(
-        lime_exp_top.as_list(), pred_top, f'Top-Scored Stock (Idx {top_stock_idx_in_test})'
+        lime_exp_top.as_list(
+        ), pred_top, f'Top-Scored Stock (Idx {top_stock_idx_in_test})'
     )
     results['explanations']['top_stock_lime'] = {
         'explanation_obj': lime_exp_top,
@@ -544,7 +607,8 @@ def run_explanation_workflow(
         output_dir=output_dir
     )
     rationale_bottom_stock = generate_investment_rationale(
-        lime_exp_bottom.as_list(), pred_bottom, f'Bottom-Scored Stock (Idx {bottom_stock_idx_in_test})'
+        lime_exp_bottom.as_list(
+        ), pred_bottom, f'Bottom-Scored Stock (Idx {bottom_stock_idx_in_test})'
     )
     results['explanations']['bottom_stock_lime'] = {
         'explanation_obj': lime_exp_bottom,
@@ -581,13 +645,15 @@ def run_explanation_workflow(
 
     return results
 
+
 if __name__ == "__main__":
     # This block will only execute when the script is run directly,
     # not when it's imported into another file like app.py.
     # In your app.py, you would import this module and call run_explanation_workflow().
 
     print("Running the full explanation workflow directly...")
-    workflow_results = run_explanation_workflow(output_dir="app_explanation_outputs")
+    workflow_results = run_explanation_workflow(
+        output_dir="app_explanation_outputs")
 
     # Example of accessing results:
     # print(f"\nTop stock predicted return: {workflow_results['explanations']['top_stock_lime']['prediction']:.4f}")

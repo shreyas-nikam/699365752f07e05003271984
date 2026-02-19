@@ -14,7 +14,8 @@ from source import (
     compare_shap_lime
 )
 
-st.set_page_config(page_title="QuLab: Lab 44: LIME for Explaining Stock Predictions", layout="wide")
+st.set_page_config(
+    page_title="QuLab: Lab 44: LIME for Explaining Stock Predictions", layout="wide")
 st.sidebar.image("https://www.quantuniversity.com/assets/img/logo5.jpg")
 st.sidebar.divider()
 st.title("QuLab: Lab 44: LIME for Explaining Stock Predictions")
@@ -33,8 +34,8 @@ if 'initialized' not in st.session_state:
     st.session_state.lime_explainer = None
     st.session_state.top_stock_idx_in_test = None
     st.session_state.bottom_stock_idx_in_test = None
-    st.session_state.selected_stock_idx = None 
-    st.session_state.stock_indices_options = [] 
+    st.session_state.selected_stock_idx = None
+    st.session_state.stock_indices_options = []
     st.session_state.lime_explanation_data = {}
     st.session_state.rationale_data = {}
     st.session_state.stability_data = {}
@@ -65,14 +66,17 @@ if st.session_state.current_page == "Introduction & Setup":
     st.markdown(f"Consider a recent scenario: a high-conviction recommendation lands on my desk – '**OVERWEIGHT AAPL: top-quintile alpha expected**.' The model, an **XGBoost Regressor**, is proprietary, meaning I can use its `predict` method but cannot inspect its internal workings directly. My responsibility, outlined by **CFA Standard V(A): Diligence and Reasonable Basis**, dictates that I must have a reasonable basis for all investment recommendations. Simply trusting a model's score without understanding its rationale is not sufficient for presenting to the investment committee or for my own due diligence.")
     st.markdown(f"This application guides me through a real-world workflow using **LIME (Local Interpretable Model-agnostic Explanations)**. LIME is a powerful XAI (Explainable AI) technique that helps illuminate the underlying drivers of black-box model predictions for individual instances. By applying LIME, I aim to translate the opaque model output into a clear, concise, and defensible investment rationale, fostering trust in the model's recommendations and ensuring compliance. We will also compare LIME with **SHAP** to gain a comprehensive understanding of feature contributions and assess the stability of explanations, ultimately equipping me with the tools to confidently integrate quantitative insights into my portfolio management strategy.")
 
-    st.header("1. Setting Up the Investment Environment: Data Simulation and Model Training")
+    st.header(
+        "1. Setting Up the Investment Environment: Data Simulation and Model Training")
     st.markdown(f"To start, I need to prepare my analytical environment. This involves installing the necessary Python libraries, simulating a realistic factor-based stock dataset, and training a black-box quantitative stock scoring model. This simulated environment mirrors the reality where I receive model recommendations based on various financial factors. The model I'm training is a simple **XGBoost Regressor**, acting as our proprietary, high-performance 'black-box' stock scorer that provides `next_month_return` predictions.")
 
     if not st.session_state.initialized:
-        st.markdown(f"**Click the button below to set up the environment and train the stock scoring model.**")
+        st.markdown(
+            f"**Click the button below to set up the environment and train the stock scoring model.**")
         if st.button("Setup Environment and Train Model"):
             with st.spinner("Setting up environment and training model..."):
-                (model, X_train, y_train, X_test, y_test, feature_cols, factors_df_full) = setup_stock_scoring_environment()
+                (model, X_train, y_train, X_test, y_test, feature_cols,
+                 factors_df_full) = setup_stock_scoring_environment()
 
                 # Initialize LIME explainer once
                 lime_explainer_init = lime.lime_tabular.LimeTabularExplainer(
@@ -94,21 +98,25 @@ if st.session_state.current_page == "Introduction & Setup":
                 st.session_state.X_test = X_test
                 st.session_state.y_test = y_test
                 st.session_state.feature_cols = feature_cols
-                st.session_state.factors_df = factors_df_full 
+                st.session_state.factors_df = factors_df_full
                 st.session_state.lime_explainer = lime_explainer_init
                 st.session_state.top_stock_idx_in_test = top_stock_idx_in_test
                 st.session_state.bottom_stock_idx_in_test = bottom_stock_idx_in_test
-                st.session_state.selected_stock_idx = top_stock_idx_in_test 
-                st.session_state.stock_indices_options = sorted(list(X_test.index.values)) 
+                st.session_state.selected_stock_idx = top_stock_idx_in_test
+                st.session_state.stock_indices_options = sorted(
+                    list(X_test.index.values))
                 st.session_state.initialized = True
-            st.success("Environment setup complete! Model trained and explainer initialized.")
+            st.success(
+                "Environment setup complete! Model trained and explainer initialized.")
             st.rerun()
 
     if st.session_state.initialized:
         st.markdown(f"The environment is now set up. We have a synthetic dataset that simulates factor exposures for a large number of stocks over several months, along with their next-month returns. Our black-box model, an XGBoost Regressor, has been trained on this data. Its performance (R-squared) gives us an initial indication of its predictive power. We've also identified the indices of the top-scoring and bottom-scoring stocks in the test set; these will be our primary candidates for explanation. The goal now is to understand *why* the model assigned these particular scores to these specific stocks.")
         st.markdown(f"---")
-        st.info(f"**Top scoring stock in test set (index in X_test):** `{st.session_state.top_stock_idx_in_test}`")
-        st.info(f"**Bottom scoring stock in test set (index in X_test):** `{st.session_state.bottom_stock_idx_in_test}`")
+        st.info(
+            f"**Top scoring stock in test set (index in X_test):** `{st.session_state.top_stock_idx_in_test}`")
+        st.info(
+            f"**Bottom scoring stock in test set (index in X_test):** `{st.session_state.bottom_stock_idx_in_test}`")
 
 # Page 2: LIME Local Explanations
 elif st.session_state.current_page == "LIME Local Explanations":
@@ -117,32 +125,39 @@ elif st.session_state.current_page == "LIME Local Explanations":
         st.markdown(f"The model has identified a stock (let's say, **Stock #{st.session_state.selected_stock_idx}**) with a high expected return, recommending it as 'OVERWEIGHT.' My next step as a Portfolio Manager is to understand the specific drivers behind this recommendation. LIME (Local Interpretable Model-agnostic Explanations) is perfect for this task because it can explain *any* black-box model by approximating its behavior locally around the prediction point.")
         st.markdown(f"LIME works by perturbing the input features of a specific instance, feeding these perturbed instances to the black-box model to get predictions, and then fitting a simple, interpretable (e.g., linear) surrogate model to these perturbed data points and their corresponding predictions. The coefficients of this local linear model then serve as the 'explanation,' indicating how each feature contributes to the specific prediction.")
 
-        st.markdown(r"The mathematical formulation for LIME's surrogate model is given by:")
-        st.markdown(r"$$g^{*} = \underset{g \in G}{\operatorname{argmin}} \sum_{i=1}^{N} \pi_x(z_i) \cdot (f(z_i) - g(z_i))^2 + \Omega(g)$$")
-        st.markdown(r"where $g$ is an interpretable model (e.g., a linear model) from the class $G$.")
+        st.markdown(
+            r"The mathematical formulation for LIME's surrogate model is given by:")
+        st.markdown(r"""
+$$
+g^{*} = \underset{g \in G}{\operatorname{argmin}} \sum_{i=1}^{N} \pi_x(z_i) \cdot (f(z_i) - g(z_i))^2 + \Omega(g)
+$$""")
+        st.markdown(
+            r"where $g$ is an interpretable model (e.g., a linear model) from the class $G$.")
         st.markdown(r"where $x$ is the instance being explained.")
         st.markdown(r"where $f$ is the black-box model.")
         st.markdown(r"where $z_i$ are perturbed samples of $x$.")
         st.markdown(r"where $\pi_x(z_i)$ is the proximity weight of $z_i$ to $x$, measuring how close $z_i$ is to the original instance $x$. A common choice is an exponential kernel, $\pi_x(z_i) = \exp(-d(x, z_i)^2 / \sigma^2)$, where $d$ is a distance function and $\sigma$ is the kernel width.")
         st.markdown(r"where $(f(z_i) - g(z_i))^2$ is the squared error between the black-box model's prediction and the surrogate model's prediction for the perturbed sample $z_i$.")
-        st.markdown(r"where $\Omega(g)$ is a complexity penalty (e.g., L1 regularization for sparsity), ensuring the surrogate model remains simple.")
+        st.markdown(
+            r"where $\Omega(g)$ is a complexity penalty (e.g., L1 regularization for sparsity), ensuring the surrogate model remains simple.")
         st.markdown(f"By minimizing this objective function, LIME finds the best local interpretable model $g^*$ whose coefficients reveal the local feature contributions.")
 
         st.subheader("Select Stock for LIME Explanation")
-        
+
         # Ensure selected index is valid
         current_index = 0
         if st.session_state.selected_stock_idx in st.session_state.stock_indices_options:
-            current_index = st.session_state.stock_indices_options.index(st.session_state.selected_stock_idx)
-            
+            current_index = st.session_state.stock_indices_options.index(
+                st.session_state.selected_stock_idx)
+
         st.session_state.selected_stock_idx = st.selectbox(
             "Choose a stock index from the test set:",
             options=st.session_state.stock_indices_options,
             index=current_index
         )
-        
+
         stock_key = st.session_state.selected_stock_idx
-        
+
         if stock_key not in st.session_state.lime_explanation_data:
             with st.spinner(f"Generating LIME explanation for Stock {stock_key}..."):
                 explanation_obj, contrib_df, prediction = explain_stock_lime(
@@ -153,23 +168,31 @@ elif st.session_state.current_page == "LIME Local Explanations":
                     st.session_state.feature_cols,
                     stock_name=f'Stock (Idx {stock_key})'
                 )
-                st.session_state.lime_explanation_data[stock_key] = (explanation_obj, contrib_df, prediction)
+                st.session_state.lime_explanation_data[stock_key] = (
+                    explanation_obj, contrib_df, prediction)
         else:
-            explanation_obj, contrib_df, prediction = st.session_state.lime_explanation_data[stock_key]
+            explanation_obj, contrib_df, prediction = st.session_state.lime_explanation_data[
+                stock_key]
 
         st.subheader(f"LIME Explanation for Stock {stock_key}")
-        st.write(f"**Predicted Return:** {prediction:+.4f} ({prediction*100:+.2f}%/month)")
-        recommendation = "OVERWEIGHT" if prediction > 0.005 else ("UNDERWEIGHT" if prediction < -0.005 else "NEUTRAL")
+        st.write(
+            f"**Predicted Return:** {prediction:+.4f} ({prediction*100:+.2f}%/month)")
+        recommendation = "OVERWEIGHT" if prediction > 0.005 else (
+            "UNDERWEIGHT" if prediction < -0.005 else "NEUTRAL")
         st.write(f"**Model Recommendation:** {recommendation}")
 
         # Plot LIME explanation
         fig, ax = plt.subplots(figsize=(10, 6))
-        contrib_df_sorted = contrib_df.sort_values(by='lime_weight', ascending=True)
-        colors = ['#ff6666' if x < 0 else '#66ff66' for x in contrib_df_sorted['lime_weight']]
-        ax.barh(contrib_df_sorted['feature_rule'], contrib_df_sorted['lime_weight'], color=colors)
+        contrib_df_sorted = contrib_df.sort_values(
+            by='lime_weight', ascending=True)
+        colors = ['#ff6666' if x <
+                  0 else '#66ff66' for x in contrib_df_sorted['lime_weight']]
+        ax.barh(contrib_df_sorted['feature_rule'],
+                contrib_df_sorted['lime_weight'], color=colors)
         ax.set_xlabel("LIME Weight (Contribution to Prediction)")
         ax.set_ylabel("Feature Rule")
-        ax.set_title(f"LIME Explanation for Stock {stock_key} (Predicted Return: {prediction*100:+.2f}%)")
+        ax.set_title(
+            f"LIME Explanation for Stock {stock_key} (Predicted Return: {prediction*100:+.2f}%)")
         plt.tight_layout()
         st.pyplot(fig)
         plt.close(fig)
@@ -182,12 +205,13 @@ elif st.session_state.current_page == "LIME Local Explanations":
         if stock_key not in st.session_state.rationale_data:
             with st.spinner(f"Generating investment rationale for Stock {stock_key}..."):
                 rationale_summary = generate_investment_rationale(
-                    explanation_obj.as_list(), prediction, f'Stock (Idx {stock_key})'
+                    explanation_obj.as_list(
+                    ), prediction, f'Stock (Idx {stock_key})'
                 )
                 st.session_state.rationale_data[stock_key] = rationale_summary
         else:
             rationale_summary = st.session_state.rationale_data[stock_key]
-        
+
         st.markdown(f"---")
         st.markdown(f"### Investment Rationale for Stock {stock_key}")
         st.markdown(rationale_summary)
@@ -201,21 +225,29 @@ elif st.session_state.current_page == "LIME Local Explanations":
 # Page 3: LIME Stability Analysis
 elif st.session_state.current_page == "LIME Stability Analysis":
     if st.session_state.initialized:
-        st.header("4. Assessing the Reliability of LIME Explanations (Stability Analysis)")
+        st.header(
+            "4. Assessing the Reliability of LIME Explanations (Stability Analysis)")
         st.markdown(f"A key concern with LIME, as a perturbation-based method, is its **stochasticity**. Because it randomly samples around the instance being explained, running LIME multiple times on the *exact same stock* can sometimes yield slightly different explanations. As a Portfolio Manager, I need to understand the **stability** of these explanations. If the top contributing features change significantly across multiple runs, it undermines trust and makes it harder to present a consistent rationale for due diligence.")
-        st.markdown(f"To assess this, I will perform an explanation stability analysis by running LIME multiple times (e.g., {st.session_state.n_stability_runs} runs) for the same stock instance. For each feature, I'll calculate the mean, standard deviation, and critically, the **Coefficient of Variation (CV)** of its LIME weight across these runs.")
+        st.markdown(
+            f"To assess this, I will perform an explanation stability analysis by running LIME multiple times (e.g., {st.session_state.n_stability_runs} runs) for the same stock instance. For each feature, I'll calculate the mean, standard deviation, and critically, the **Coefficient of Variation (CV)** of its LIME weight across these runs.")
         st.markdown(r"The Coefficient of Variation (CV) is a standardized measure of dispersion of a probability distribution or frequency distribution. It is defined as the ratio of the standard deviation to the mean:")
-        st.markdown(r"$$CV = \frac{\sigma}{\mu}$$")
-        st.markdown(r"where $\sigma$ is the standard deviation of the LIME weights for a feature across multiple runs.")
-        st.markdown(r"where $\mu$ is the mean of the LIME weights for that feature across multiple runs.")
+        st.markdown(r"""
+$$
+CV = \frac{\sigma}{\mu}
+$$""")
+        st.markdown(
+            r"where $\sigma$ is the standard deviation of the LIME weights for a feature across multiple runs.")
+        st.markdown(
+            r"where $\mu$ is the mean of the LIME weights for that feature across multiple runs.")
         st.markdown(f"A lower CV (e.g., below 0.3) indicates a more stable and reliable feature contribution, suggesting that the feature consistently influences the prediction in a similar way. A high CV points to instability, warranting further investigation.")
 
         st.subheader("Select Stock for Stability Analysis")
-        
+
         current_index = 0
         if st.session_state.selected_stock_idx in st.session_state.stock_indices_options:
-            current_index = st.session_state.stock_indices_options.index(st.session_state.selected_stock_idx)
-            
+            current_index = st.session_state.stock_indices_options.index(
+                st.session_state.selected_stock_idx)
+
         st.session_state.selected_stock_idx = st.selectbox(
             "Choose a stock index for stability analysis:",
             options=st.session_state.stock_indices_options,
@@ -240,7 +272,8 @@ elif st.session_state.current_page == "LIME Stability Analysis":
                     st.session_state.feature_cols,
                     n_runs=st.session_state.n_stability_runs
                 )
-                st.session_state.stability_data[stock_key] = (stab_df, plot_df_filtered)
+                st.session_state.stability_data[stock_key] = (
+                    stab_df, plot_df_filtered)
             st.success("Stability analysis complete!")
 
         if stock_key in st.session_state.stability_data:
@@ -248,27 +281,31 @@ elif st.session_state.current_page == "LIME Stability Analysis":
 
             st.subheader(f"LIME Explanation Stability for Stock {stock_key}")
             st.markdown(f"**Feature Explanation Stability Table:**")
-            
+
             st.dataframe(stab_df.style.format({
                 'mean_weight': '{:+.4f}',
                 'std_weight': '{:.4f}',
                 'cv': '{:.2f}'
             }))
-            
+
             avg_cv_overall = stab_df['cv'].mean()
-            st.markdown(f"\nAverage CV across all features: {avg_cv_overall:.3f}")
+            st.markdown(
+                f"\nAverage CV across all features: {avg_cv_overall:.3f}")
             if avg_cv_overall > 0.5:
                 st.warning("WARNING: LIME explanations show significant instability for this instance. Consider increasing num_samples or using SHAP for more deterministic explanations.")
             elif avg_cv_overall > 0.3:
-                st.info("Note: LIME explanations show moderate instability. Review critical features carefully.")
+                st.info(
+                    "Note: LIME explanations show moderate instability. Review critical features carefully.")
             else:
-                st.success("PASS: LIME explanations appear reasonably stable on average for this instance.")
+                st.success(
+                    "PASS: LIME explanations appear reasonably stable on average for this instance.")
 
             if not plot_df_filtered.empty:
                 fig, ax = plt.subplots(figsize=(12, 7))
                 sns.boxplot(x='weight', y='feature_rule', data=plot_df_filtered.sort_values(
                     by='feature_rule', key=lambda x: x.map(stab_df['mean_weight'].abs().to_dict()), ascending=False), orient='h', ax=ax)
-                ax.set_title(f'LIME Feature Weight Stability (Box Plot across {st.session_state.n_stability_runs} Runs) for Stock Index {stock_key}')
+                ax.set_title(
+                    f'LIME Feature Weight Stability (Box Plot across {st.session_state.n_stability_runs} Runs) for Stock Index {stock_key}')
                 ax.set_xlabel('LIME Weight')
                 ax.set_ylabel('Feature Rule')
                 ax.grid(axis='x', linestyle='--', alpha=0.7)
@@ -277,8 +314,9 @@ elif st.session_state.current_page == "LIME Stability Analysis":
                 plt.close(fig)
             else:
                 st.info("Not enough data to plot stability for this stock.")
-            
-        st.markdown(f"The stability analysis provides critical insight into the reliability of LIME's explanations. The table shows the mean weight, standard deviation, and Coefficient of Variation (CV) for each feature across {st.session_state.n_stability_runs} independent LIME runs. Features with a low CV (e.g., < 0.3) are generally stable, meaning their influence on the prediction is consistent. A higher CV or features appearing in fewer runs (low 'Freq') suggest instability, which I need to note for my due diligence. The box plot further visualizes the distribution of weights for the most impactful features, allowing me to see the spread and potential outliers in feature contributions. If a key factor, like 'earnings_growth,' has a high CV, I would exercise caution and perhaps seek alternative explanations or increase `num_samples` in LIME for potentially more robust estimates. This helps me understand the 'Achilles' heel' of LIME and manage my trust in its output.")
+
+        st.markdown(
+            f"The stability analysis provides critical insight into the reliability of LIME's explanations. The table shows the mean weight, standard deviation, and Coefficient of Variation (CV) for each feature across {st.session_state.n_stability_runs} independent LIME runs. Features with a low CV (e.g., < 0.3) are generally stable, meaning their influence on the prediction is consistent. A higher CV or features appearing in fewer runs (low 'Freq') suggest instability, which I need to note for my due diligence. The box plot further visualizes the distribution of weights for the most impactful features, allowing me to see the spread and potential outliers in feature contributions. If a key factor, like 'earnings_growth,' has a high CV, I would exercise caution and perhaps seek alternative explanations or increase `num_samples` in LIME for potentially more robust estimates. This helps me understand the 'Achilles' heel' of LIME and manage my trust in its output.")
 
     else:
         st.info("Please complete the 'Introduction & Setup' page first.")
@@ -291,24 +329,29 @@ elif st.session_state.current_page == "SHAP vs. LIME Comparison":
         st.markdown(f"Comparing LIME and SHAP can reveal areas of agreement, bolstering confidence in the identified drivers, or areas of disagreement, which can flag potential issues like LIME's local approximation limitations or model interactions not captured by LIME. I will compare the feature contributions and their rankings from both methods for the same top-scoring stock. The **Spearman rank correlation coefficient** will quantify the agreement between the feature rankings.")
 
         st.markdown(r"Spearman's rank correlation coefficient $\rho$ is a non-parametric measure of the monotonic relationship between two ranked variables. It is calculated as:")
-        st.markdown(r"$$ \rho = 1 - \frac{6 \sum d_i^2}{n(n^2 - 1)} $$")
-        st.markdown(r"where $d_i$ is the difference between the ranks of the $i$-th observation for the two variables.")
+        st.markdown(r"""
+$$
+ \rho = 1 - \frac{6 \sum d_i^2}{n(n^2 - 1)} 
+$$""")
+        st.markdown(
+            r"where $d_i$ is the difference between the ranks of the $i$-th observation for the two variables.")
         st.markdown(r"where $n$ is the number of observations (features).")
         st.markdown(f"A $\rho$ value close to +1 indicates a strong positive monotonic relationship (high agreement in rankings), while a value close to -1 indicates a strong negative monotonic relationship (complete disagreement in rankings). A value near 0 suggests no monotonic relationship.")
 
         st.subheader("Select Stock for SHAP vs. LIME Comparison")
-        
+
         current_index = 0
         if st.session_state.selected_stock_idx in st.session_state.stock_indices_options:
-            current_index = st.session_state.stock_indices_options.index(st.session_state.selected_stock_idx)
-            
+            current_index = st.session_state.stock_indices_options.index(
+                st.session_state.selected_stock_idx)
+
         st.session_state.selected_stock_idx = st.selectbox(
             "Choose a stock index for comparison:",
             options=st.session_state.stock_indices_options,
             index=current_index,
             key="comparison_stock_select"
         )
-        
+
         stock_key = st.session_state.selected_stock_idx
 
         if st.button(f"Compare SHAP and LIME for Stock {stock_key}"):
@@ -321,11 +364,13 @@ elif st.session_state.current_page == "SHAP vs. LIME Comparison":
                     st.session_state.feature_cols,
                     stock_name=f'Stock (Idx {stock_key})'
                 )
-                st.session_state.comparison_data[stock_key] = (shap_contrib_df, lime_contrib_df, rank_corr_coeff, comparison_df)
+                st.session_state.comparison_data[stock_key] = (
+                    shap_contrib_df, lime_contrib_df, rank_corr_coeff, comparison_df)
             st.success("Comparison complete!")
 
         if stock_key in st.session_state.comparison_data:
-            shap_contrib_df, lime_contrib_df, rank_corr_coeff, comparison_df = st.session_state.comparison_data[stock_key]
+            shap_contrib_df, lime_contrib_df, rank_corr_coeff, comparison_df = st.session_state.comparison_data[
+                stock_key]
 
             st.subheader(f"SHAP vs. LIME Comparison for Stock {stock_key}")
 
@@ -335,23 +380,31 @@ elif st.session_state.current_page == "SHAP vs. LIME Comparison":
                 'lime_weight': '{:+.4f}',
             }))
 
-            st.write(f"\n**Spearman Rank Correlation (SHAP vs. LIME features):** `{rank_corr_coeff:.3f}`")
+            st.write(
+                f"\n**Spearman Rank Correlation (SHAP vs. LIME features):** `{rank_corr_coeff:.3f}`")
 
             if rank_corr_coeff > 0.7:
-                st.success("Conclusion: GOOD. SHAP and LIME largely agree on feature ranking. This increases confidence in the explanation.")
+                st.success(
+                    "Conclusion: GOOD. SHAP and LIME largely agree on feature ranking. This increases confidence in the explanation.")
             elif rank_corr_coeff > 0.4:
-                st.info("Conclusion: MODERATE. Some disagreement in feature ranking. Investigation may be needed for specific discrepancies.")
+                st.info(
+                    "Conclusion: MODERATE. Some disagreement in feature ranking. Investigation may be needed for specific discrepancies.")
             else:
-                st.warning("Conclusion: WARNING. Substantial disagreement between SHAP and LIME rankings. This warrants further investigation into why explanations diverge.")
+                st.warning(
+                    "Conclusion: WARNING. Substantial disagreement between SHAP and LIME rankings. This warrants further investigation into why explanations diverge.")
 
             # Plot SHAP vs. LIME Rank Comparison
             fig, ax = plt.subplots(figsize=(8, 8))
-            sns.scatterplot(x='shap_rank', y='lime_rank', data=comparison_df, hue='feature', s=100, ax=ax)
-            
-            max_rank = max(comparison_df['shap_rank'].max(), comparison_df['lime_rank'].max()) if not comparison_df.empty else 1
-            ax.plot([1, max_rank], [1, max_rank], 'k--', alpha=0.6, label='Perfect Agreement')
-            
-            ax.set_title(f'SHAP Rank vs. LIME Rank for Stock {stock_key} (Spearman: {rank_corr_coeff:.2f})')
+            sns.scatterplot(x='shap_rank', y='lime_rank',
+                            data=comparison_df, hue='feature', s=100, ax=ax)
+
+            max_rank = max(comparison_df['shap_rank'].max(
+            ), comparison_df['lime_rank'].max()) if not comparison_df.empty else 1
+            ax.plot([1, max_rank], [1, max_rank], 'k--',
+                    alpha=0.6, label='Perfect Agreement')
+
+            ax.set_title(
+                f'SHAP Rank vs. LIME Rank for Stock {stock_key} (Spearman: {rank_corr_coeff:.2f})')
             ax.set_xlabel('SHAP Feature Rank (1 = most important)')
             ax.set_ylabel('LIME Feature Rank (1 = most important)')
             ax.set_xticks(range(1, int(max_rank) + 1))
@@ -393,19 +446,19 @@ elif st.session_state.current_page == "XAI Method Selection Guide":
     st.markdown(
         """
 1.  **Is the model a tree-based ensemble (e.g., XGBoost, LightGBM, Random Forest)?**
-    *   **Yes $\rightarrow$ SHAP `TreeExplainer`:** It's fast, exact, and deterministic, making it ideal.
+    *   **Yes -> SHAP `TreeExplainer`:** It's fast, exact, and deterministic, making it ideal.
 2.  **Is the model a true black-box (e.g., proprietary vendor model, deep neural network, LLM accessed via API) where internals are inaccessible?**
-    *   **Yes $\rightarrow$ LIME:** It only needs the `predict` method, making it highly model-agnostic. SHAP's KernelSHAP can also work but is often too slow for many features.
+    *   **Yes -> LIME:** It only needs the `predict` method, making it highly model-agnostic. SHAP's KernelSHAP can also work but is often too slow for many features.
 3.  **Is the decision highly regulated (e.g., credit denials, hiring, medical diagnosis)?**
-    *   **Yes $\rightarrow$ SHAP:** Its deterministic nature and strong theoretical guarantees are often preferred for compliance and auditability. Instability in explanations (as seen with LIME) can be problematic.
+    *   **Yes -> SHAP:** Its deterministic nature and strong theoretical guarantees are often preferred for compliance and auditability. Instability in explanations (as seen with LIME) can be problematic.
 4.  **Is the goal exploratory analysis or investment research (less regulated)?**
-    *   **Yes $\rightarrow$ LIME is acceptable:** Its speed and model-agnosticism make it practical for quickly generating hypotheses, even with some instability.
+    *   **Yes -> LIME is acceptable:** Its speed and model-agnosticism make it practical for quickly generating hypotheses, even with some instability.
 5.  **Do I need insights into both global feature importance AND local predictions?**
-    *   **Yes $\rightarrow$ SHAP:** Offers both global summary plots and detailed local explanations. LIME is strictly local.
+    *   **Yes -> SHAP:** Offers both global summary plots and detailed local explanations. LIME is strictly local.
 6.  **Do I suspect strong feature interactions in the model's logic?**
-    *   **Yes $\rightarrow$ SHAP:** SHAP interaction values can explicitly quantify how features interact to influence a prediction. LIME's linear surrogate struggles with this.
+    *   **Yes -> SHAP:** SHAP interaction values can explicitly quantify how features interact to influence a prediction. LIME's linear surrogate struggles with this.
 7.  **Are both SHAP and LIME available and computationally feasible?**
-    *   **Yes $\rightarrow$ Use both and compare:** Agreement between methods increases confidence. Disagreement (as measured by rank correlation) is diagnostic, prompting further investigation into model behavior or explanation robustness.
+    *   **Yes -> Use both and compare:** Agreement between methods increases confidence. Disagreement (as measured by rank correlation) is diagnostic, prompting further investigation into model behavior or explanation robustness.
         """
     )
     st.markdown(f"This decision framework empowers me to make an informed choice about which XAI tool to deploy in different scenarios. For instance, if I'm analyzing a vendor's black-box model (Scenario 2), LIME is the go-to. If I'm using an internal, tree-based model for a highly regulated credit scoring task (Scenarios 1 & 3), SHAP's determinism and exactness would be preferred. The comparison conducted in the previous section (Scenario 7) directly feeds into this guide, allowing me to interpret discrepancies as diagnostic signals. By understanding the nuances of each method, I can apply XAI more effectively, enhancing my model governance, due diligence, and overall decision-making process.")
